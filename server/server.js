@@ -20,6 +20,20 @@ const allowedOrigins = [
   'http://localhost:5173',
 ].filter(Boolean);
 
+// in server/server.js (after body parsers), TEMP only:
+const { sendMail } = require('./utils/mailer');
+app.post('/_diag/email', async (req, res) => {
+  try {
+    const to = process.env.SMTP_USER; // send to yourself
+    await sendMail({ to, subject: 'SMTP test', text: 'It works!' });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('SMTP test error:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+
 const corsOptions = {
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin)) {
