@@ -4,34 +4,68 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const sequelize = require('./config/database');
-const stripeWebhook = require('./routes/stripeWebhook');
+const path = require('path');
 
+// Load env vars
 dotenv.config();
 
 const app = express();
 
-// ====== CORS first ======
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173'],
-  credentials: true,
-}));
+/* =====================================================
+   1. CORS FIRST — before any routes or body parsers
+===================================================== */
+const allowedOrigins = [
+  process.env.FRONTEND_URL, // e.g. https://online-ordersmf.onrender.com
+  'http://localhost:3000',
+  'http://localhost:5173',
+].filter(Boolean);
 
-// ====== Stripe webhook (MUST be before any JSON/body parsers) ======
+const corsOptions = {
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return cb(null, true);
+    }
+    console.warn(`❌ CORS blocked origin: ${origin}`);
+    return cb(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // handle preflight for all routes
+
+/* =====================================================
+   2. STRIPE WEBHOOK — mount before JSON/body parser
+===================================================== */
 app.post(
   '/api/payment/stripe-webhook',
   express.raw({ type: 'application/json' }),
-  require('./routes/stripeWebhook') // if this file exports a handler function
+  require('./routes/stripeWebhook')
 );
 
-// ====== Now enable JSON for the rest of the app ======
-app.use(bodyParser.json());
+/* =====================================================
+   3. Body Parsers for JSON & URL-encoded payloads
+===================================================== */
+app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// ====== Test route ======
+/* =====================================================
+   4. Health Check (for Render)
+===================================================== */
+app.get('/healthz', (req, res) => res.status(200).send('ok'));
+
+/* =====================================================
+   5. Test Route
+===================================================== */
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
-// ====== Import Routes ======
+/* =====================================================
+   6. Import & Mount Routes
+===================================================== */
 const authRoutes = require('./routes/authRoutes');
 const menuRoutes = require('./routes/menuRoutes');
 const cartRoutes = require('./routes/cartRoutes');
@@ -40,7 +74,6 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 
-// ====== Mount Routes ======
 app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/cart', cartRoutes);
@@ -49,28 +82,32 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/notification', notificationRoutes);
 
-// NOTE: If routes/stripeWebhook.js is an Express Router (not a single handler),
-// you can mount it like this instead of the raw POST above:
-// app.use('/api/stripe', stripeWebhook);
-
-// ====== Global Error Handling ======
+/* =====================================================
+   7. Global Error Handling
+===================================================== */
 app.use((err, req, res, next) => {
-  console.error('Error:', err.message || err);
+  console.error('❌ Global Error:', err.message || err);
   res.status(500).json({ message: 'Internal Server Error' });
 });
 
-// ====== 404 fallback ======
+/* =====================================================
+   8. 404 Fallback
+===================================================== */
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-// ====== Start Server ======
+/* =====================================================
+   9. Start Server after DB connects
+===================================================== */
 sequelize
   .sync({ alter: true })
   .then(() => {
-    const port = process.env.PORT || 5000;
-    app.listen(port, () => {
-      console.log(`✅ Server running on port ${port}`);
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`✅ Server running on port ${PORT}`);
     });
   })
-  .catch((err) => console.error('❌ Database connection error:', err));
+  .catch((err) => {
+    console.error('❌ Database connection error:', err);
+  });
