@@ -1,0 +1,150 @@
+/* ===== Uber-style Master Data (matches your existing JSX) ===== */
+:root{
+  --ue-green:#06c167;
+  --ue-bg:#f6f6f6;
+  --ue-surface:#ffffff;
+  --ue-text:#111;
+  --ue-muted:#6b7280;
+  --ue-border:#e5e7eb;
+}
+
+/* Page */
+.master-container{
+  background:var(--ue-bg);
+  color:var(--ue-text);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  padding:28px 32px;
+  max-width:1200px;           /* centers the content */
+  margin:0 auto;
+}
+
+/* Title */
+.master-container h2{
+  margin:6px 0 18px;
+  text-align:center;
+  font-size:28px;
+  font-weight:800;
+}
+
+/* ---------- Top forms (your two .form-group blocks) ---------- */
+.form-group{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+  gap:12px;
+  align-items:center;
+
+  background:var(--ue-surface);
+  border:1px solid var(--ue-border);
+  border-radius:14px;
+  padding:12px;
+  box-shadow:0 6px 18px rgba(0,0,0,.04);
+  margin-bottom:16px;
+}
+
+.form-group input,
+.form-group select{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid var(--ue-border);
+  border-radius:10px;
+  background:#fff;
+  font-size:14px;
+  outline:none;
+}
+.form-group input:focus,
+.form-group select:focus{
+  border-color:#bcd8c9;
+  box-shadow:0 0 0 3px rgba(6,193,103,.15);
+}
+
+.form-group button{
+  justify-self:start;
+  padding:9px 14px;
+  border-radius:10px;
+  border:1px solid transparent;
+  background:var(--ue-green);
+  color:#0b0b0b;
+  font-weight:700;
+  cursor:pointer;
+  transition:filter .15s ease, transform .12s ease;
+}
+.form-group button:hover{filter:brightness(1.03); transform:translateY(-1px);}
+
+/* ---------- Two cards: Categories | Menu Items ---------- */
+.split-section{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  margin-top:8px;
+}
+
+.category-list,
+.item-list{
+  background:var(--ue-surface);
+  border:1px solid var(--ue-border);
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.04);
+  padding:16px;
+}
+
+.category-list h3,
+.item-list h3{
+  margin:0 0 12px;
+  font-size:18px;
+  font-weight:800;
+}
+
+/* Lists */
+.category-list ul,
+.item-list ul{
+  list-style:none;
+  padding:0;
+  margin:0;
+}
+.category-list li,
+.item-list li{
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:center;
+  gap:12px;
+  padding:12px 4px;
+  border-bottom:1px solid var(--ue-border);
+}
+.category-list li:last-child,
+.item-list li:last-child{border-bottom:0;}
+.category-list li>span:first-child,
+.item-list li>span:first-child{overflow-wrap:anywhere;}
+
+/* Small action buttons (your ✏️ / 🗑️) */
+.category-list li span button,
+.item-list li span button{
+  appearance:none;
+  border:1px solid var(--ue-border);
+  background:#fff;
+  color:#111;
+  border-radius:10px;
+  padding:6px 10px;
+  margin-left:6px;
+  cursor:pointer;
+  transition:background .15s ease, transform .12s ease, box-shadow .15s ease;
+}
+.category-list li span button:hover,
+.item-list li span button:hover{
+  background:#f9fafb;
+  transform:translateY(-1px);
+  box-shadow:0 4px 10px rgba(0,0,0,.06);
+}
+/* optional hint colors */
+.category-list li span button:first-child,
+.item-list li span button:first-child{ border-color:#ffe7b6; }  /* edit */
+.category-list li span button:last-child,
+.item-list li span button:last-child { border-color:#ffd2d2; }  /* delete */
+
+/* ---------- Small helpers ---------- */
+@media (max-width:1024px){
+  .split-section{ grid-template-columns:1fr; }
+}
+@media (max-width:520px){
+  .form-group{ grid-template-columns:1fr; padding:10px; }
+  .form-group button{ justify-self:stretch; }
+}

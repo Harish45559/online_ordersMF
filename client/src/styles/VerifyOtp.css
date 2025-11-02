@@ -1,0 +1,42 @@
+.verify-container {
+  max-width: 400px;
+  margin: 60px auto;
+  padding: 20px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+.verify-container h2 {
+  margin-bottom: 20px;
+}
+.verify-container input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.verify-container button {
+  padding: 10px 20px;
+  margin: 5px;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.verify-container .resend-btn {
+  background-color: #ffc107;
+  color: #000;
+}
+.verify-container .continue-btn {
+  background-color: #28a745;
+  color: white;
+}
+.verify-container button:hover {
+  opacity: 0.9;
+}
+.verify-container p {
+  margin-top: 15px;
+  color: #333;
+}

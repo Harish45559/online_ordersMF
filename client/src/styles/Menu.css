@@ -1,0 +1,202 @@
+/* ================================
+   Uber Eats–like Menu UI (clean)
+   ================================ */
+
+:root{
+  --bg:#f7f7f7;
+  --panel:#ffffff;
+  --border:#eaeaea;
+  --ink:#111214;
+  --muted:#6f7175;
+  --chip:#f1f2f4;
+  --chip-active:#111214;
+  --accent:#111214;
+  --radius-xl:16px;
+  --radius-lg:14px;
+  --radius-md:12px;
+  --shadow:0 1px 2px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.06);
+  --shadow-soft:0 1px 3px rgba(0,0,0,.05);
+  --maxw:1200px;  /* main content width (cards + cart) */
+}
+
+/* Base */
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink)}
+h1,h2,h3,h4{margin:0}
+.ue-wrap{background:var(--bg);min-height:100vh}
+.ue-wrap.with-cart{max-width:1440px;margin:0 auto;padding-bottom:68px}
+
+/* ===============================
+   Sticky ribbon (search + chips)
+   =============================== */
+.ue-ribbon{
+  position:sticky; top:0; z-index:40;
+  background:var(--bg);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:saturate(180%) blur(6px);
+  -webkit-backdrop-filter:saturate(180%) blur(6px);
+  padding:8px 12px;
+}
+
+/* Row containers */
+.ue-ribbon-row{display:flex;align-items:center;gap:12px}
+.ue-ribbon-row--search{justify-content:center;padding-bottom:8px}
+.ue-ribbon-row--chips{position:relative}
+
+/* Search (top, centered) */
+.ue-search{
+  width:300px; height:36px; line-height:36px;
+  padding:0 12px; border:1px solid var(--border);
+  border-radius:999px; background:#fff; outline:none;
+}
+.ue-search::placeholder{color:#9aa0a6}
+
+/* Horizontal chip scroller */
+.ue-ribbon-inner{
+  max-width:var(--maxw);
+  margin:0 auto;
+  display:flex; gap:8px;
+  overflow-x:auto; overflow-y:hidden;
+  white-space:nowrap; scrollbar-width:thin;
+  padding-bottom:2px; scroll-behavior:smooth;
+}
+.ue-ribbon-inner::-webkit-scrollbar{height:6px}
+.ue-ribbon-inner::-webkit-scrollbar-thumb{
+  background:rgba(0,0,0,.25); border-radius:10px;
+}
+
+/* Chip */
+.ue-chip{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:8px 12px;
+  border:1px solid var(--border);
+  background:var(--chip); color:var(--ink);
+  border-radius:999px; font-size:13px; font-weight:600;
+  cursor:pointer; white-space:nowrap; transition:background .15s ease;
+}
+.ue-chip:hover{background:#e9eaee}
+.ue-chip.is-active{background:var(--chip-active); color:#fff; border-color:#000}
+
+/* All Categories dropdown (compact, no internal scrollbars) */
+.ue-cat-dropdown{
+  position:absolute; top:calc(100% + 6px); left:0;
+  width:360px; background:#fff;
+  border:1px solid rgba(0,0,0,.1);
+  border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.12);
+  padding:10px; animation:ueDrop 140ms ease-out;
+  /* No internal scrollers: let the page scroll instead */
+  max-height:none; overflow:visible;
+}
+.ue-cat-dropdown strong{display:block; font-size:15px; margin-bottom:8px}
+.ue-cat-list{display:grid; grid-template-columns:1fr; gap:8px}
+.ue-cat-dropdown .ue-chip{
+  width:100%; justify-content:flex-start;
+  font-size:13px; padding:6px 10px; border-radius:8px;
+}
+@keyframes ueDrop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===============================
+   Layout (content + cart)
+   =============================== */
+.ue-content{
+  max-width:var(--maxw); margin:0 auto;
+  display:grid; grid-template-columns:1fr;
+  gap:18px; padding:16px 12px 32px;
+}
+@media (min-width:980px){
+  .ue-content{grid-template-columns:minmax(0,1fr) 360px;}
+}
+
+/* Sections & list grid */
+.ue-section{margin-top:18px}
+.ue-section-title{
+  font-size:18px; line-height:1.2; font-weight:800;
+  margin:8px 2px 12px;
+}
+.ue-grid{display:grid; grid-template-columns:1fr; gap:12px}
+@media (min-width:1024px){ .ue-grid{grid-template-columns:1fr 1fr} }
+
+/* ===============================
+   Item card
+   =============================== */
+.ue-card{
+  display:grid; grid-template-columns:1fr 160px; gap:16px;
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:var(--radius-xl); padding:16px; box-shadow:var(--shadow-soft);
+}
+.ue-info{display:flex; flex-direction:column; gap:6px}
+.ue-name,.ue-item-name{display:flex; align-items:center; gap:6px; font-weight:800; font-size:16px}
+.ue-desc{margin:0; color:var(--muted); font-size:13.5px; line-height:1.35}
+.ue-meta{display:flex; gap:10px; align-items:center; margin-top:4px}
+.ue-price{font-weight:800}
+.ue-veg{font-size:11px; font-weight:800; color:#1a7f37; border:1px solid #1a7f37; border-radius:999px; padding:2px 6px}
+.ue-img{width:160px; height:120px; border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border); background:#fff}
+.ue-img img{width:100%; height:100%; object-fit:cover}
+
+/* Add / Stepper */
+.ue-add-btn{align-self:flex-start; margin-top:6px; background:var(--accent); color:#fff; border:none; border-radius:999px; padding:8px 16px; font-weight:800; cursor:pointer; transition:transform .08s ease}
+.ue-add-btn:active{transform:scale(.98)}
+.ue-stepper{align-self:flex-start; margin-top:6px; display:inline-flex; align-items:center; gap:12px; border:1px solid var(--border); border-radius:999px; padding:4px 10px; background:#fff}
+.ue-stepper button{border:none; background:transparent; cursor:pointer; font-size:18px; line-height:1; padding:2px 6px}
+.ue-stepper span{min-width:18px; text-align:center; font-weight:800}
+
+/* ===============================
+   Cart (right column)
+   =============================== */
+.ue-cart{position:sticky; top:92px; height:fit-content}
+.ue-cart-card{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow); padding:14px}
+.ue-cart-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px}
+.ue-link{background:transparent; border:none; color:#2563eb; cursor:pointer}
+.ue-cart-empty{padding:18px; text-align:center; color:var(--muted)}
+.ue-cart-list{display:flex; flex-direction:column; gap:8px; max-height:55vh; overflow:auto}
+.ue-cart-row{display:grid; grid-template-columns:1fr auto auto auto; gap:10px; align-items:center; border-bottom:1px dashed var(--border); padding-bottom:8px}
+.ue-cart-title{display:flex; flex-direction:column}
+.ue-cart-meta{color:var(--muted); font-size:13px}
+.ue-cart-qty{display:flex; align-items:center; gap:10px; border:1px solid var(--border); border-radius:999px; padding:2px 8px}
+.ue-cart-qty button{border:none; background:transparent; font-size:18px; cursor:pointer; padding:2px 6px}
+.ue-cart-sub{font-weight:800}
+.ue-remove{border:none; background:transparent; font-size:18px; cursor:pointer; color:#a1a1a1}
+.ue-remove:hover{color:#666}
+.ue-cart-total{display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-top:1px solid var(--border); margin-top:8px}
+.ue-total-amt{font-weight:900}
+.ue-checkout-btn{width:100%; background:var(--accent); color:#fff; border:none; border-radius:12px; padding:12px 16px; font-weight:900; cursor:pointer}
+.ue-checkout-btn:disabled{opacity:.6; cursor:not-allowed}
+
+/* ===============================
+   Mobile bottom bar
+   =============================== */
+.ue-bottom-cart{position:fixed; left:0; right:0; bottom:0; z-index:40; display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:var(--accent); color:#fff}
+.ue-bottom-left{display:flex; flex-direction:column}
+.ue-bottom-btn{background:#fff; color:var(--accent); border:none; border-radius:999px; padding:8px 14px; font-weight:900; cursor:pointer}
+
+/* ===============================
+   Empties & skeletons
+   =============================== */
+.ue-empty,.ue-empty-cat{color:var(--muted); font-size:.95rem; border:1px dashed var(--border); border-radius:var(--radius-md); padding:14px; background:#fff}
+.skeleton{min-height:64px; background:linear-gradient(90deg,#f6f7f8 0,#f1f2f3 50%,#f6f7f8 100%); background-size:200% 100%; animation:shine 1.2s linear infinite}
+@keyframes shine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.ue-skel{display:grid; gap:20px}
+.ue-skel-sec{display:grid; gap:12px}
+.ue-skel-title{height:16px; width:18%; border-radius:8px; background:#eee}
+.ue-skel-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.ue-skel-card{height:120px; border-radius:var(--radius-xl); background:#eee}
+
+/* Responsive tweaks */
+@media (max-width:900px){
+  .ue-wrap.with-cart{max-width:100%}
+  .ue-search{width:220px}
+}
+
+
+/* Notes box in cart */
+.ue-notes { margin: 10px 0 12px; }
+.ue-notes label { display:block; margin-bottom:6px; }
+.ue-notes-input {
+  width:100%;
+  resize: vertical;
+  padding:10px 12px;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  background:#fff;
+  font:inherit;
+}

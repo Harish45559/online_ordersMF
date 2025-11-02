@@ -1,0 +1,219 @@
+/* ====== Base reset (safe) ====== */
+:root {
+  --ue-bg: #ffffff;
+  --ue-text: #111111;
+  --ue-muted: #6b7280;
+  --ue-panel: #f6f6f6;
+  --ue-border: #e5e7eb;
+  --ue-black: #0a0a0a;     /* Sidebar */
+  --ue-black-2: #141414;   /* Hover */
+  --ue-green: #06c167;     /* Uber Eats green */
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--ue-bg);
+  color: var(--ue-text);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ====== Sidebar (works with your existing <Sidebar />) ====== */
+.sidebar {
+  background: var(--ue-black) !important;
+  color: #fff !important;
+  width: 240px !important;
+  min-height: 100vh;
+  border-right: 1px solid #0f0f0f;
+  position: sticky;
+  top: 0;
+  padding: 22px 16px !important;
+  box-shadow: 2px 0 14px rgba(0,0,0,.2);
+}
+
+.sidebar h2,
+.sidebar .brand {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: .2px;
+  margin: 0 0 20px 4px !important;
+  color: #fff !important;
+}
+
+/* navigation list inside sidebar */
+.sidebar ul { list-style: none; margin: 0; padding: 8px 0 0; }
+.sidebar ul li { margin: 6px 0; }
+
+/* links/buttons in sidebar */
+.sidebar a,
+.sidebar button,
+.sidebar .nav-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  text-decoration: none;
+  color: #eaeaea !important;
+  background: transparent;
+  border: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14.5px;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease, transform .12s ease;
+}
+
+/* hover */
+.sidebar a:hover,
+.sidebar button:hover,
+.sidebar .nav-link:hover {
+  background: var(--ue-black-2);
+  color: #ffffff !important;
+  transform: translateX(2px);
+}
+
+/* active state (add .active in your link OR data-active="true") */
+.sidebar a.active,
+.sidebar .nav-link.active,
+.sidebar a[data-active="true"] {
+  background: var(--ue-black-2);
+  position: relative;
+  color: #ffffff !important;
+}
+.sidebar a.active::before,
+.sidebar .nav-link.active::before,
+.sidebar a[data-active="true"]::before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--ue-green);
+}
+
+/* logout button at bottom (if present) */
+.sidebar .logout {
+  margin-top: 16px;
+  background: var(--ue-black-2);
+  color: #fff;
+  border-radius: 10px;
+  border: 1px solid #1f1f1f;
+}
+.sidebar .logout:hover { background: #1b1b1b; }
+
+/* ====== Main content area (the div that sits to the right of sidebar) ====== */
+/* Your App.js already sets margin-left inline; we only style the surface */
+.dashboard-content,
+main,
+.content,
+.page-content {
+  background: var(--ue-panel);
+  min-height: 100vh;
+  padding: 28px 32px;
+}
+
+/* Page title */
+.dashboard-content h1,
+.page-content h1,
+main h1 {
+  margin: 6px 0 18px;
+  font-size: 28px;
+  font-weight: 800;
+  color: #111;
+}
+
+/* Subtle helper text */
+.muted { color: var(--ue-muted); font-size: 14px; }
+
+/* ====== Cards (use for boxes/sections) ====== */
+.ue-card {
+  background: #fff;
+  border: 1px solid var(--ue-border);
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.04);
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+/* simple grid for cards */
+.ue-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 960px) {
+  .ue-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ====== Table (Uber-clean) ====== */
+.ue-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--ue-border);
+  border-radius: 12px;
+  background: #fff;
+}
+.ue-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+.ue-table thead th {
+  text-align: left;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  color: #374151;
+  padding: 12px;
+  border-bottom: 1px solid var(--ue-border);
+  background: #fafafa;
+}
+.ue-table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid var(--ue-border);
+  color: #1f2937;
+  font-size: 14.5px;
+}
+.ue-table tbody tr:hover { background: #fafafa; }
+
+/* ====== Buttons ====== */
+.ue-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--ue-border);
+  background: #fff;
+  color: #111;
+  font-weight: 600;
+  cursor: pointer;
+  transition: box-shadow .15s ease, transform .12s ease, background .15s ease;
+}
+.ue-btn:hover { background: #f9fafb; transform: translateY(-1px); }
+
+.ue-btn--primary {
+  background: var(--ue-green);
+  color: #0a0a0a;
+  border-color: transparent;
+}
+.ue-btn--primary:hover { filter: brightness(1.02); }
+
+/* Small badges for status */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.badge--ok    { background: #e8f9f0; color: #0b7e49; }
+.badge--warn  { background: #fff7e6; color: #a66400; }
+.badge--error { background: #ffefef; color: #b91c1c; }
+
+/* Hide ugly scrollbars in content area only (sidebar still scrolls if needed) */
+.dashboard-content::-webkit-scrollbar,
+.page-content::-webkit-scrollbar,
+main::-webkit-scrollbar { width: 0; height: 0; }
+  
