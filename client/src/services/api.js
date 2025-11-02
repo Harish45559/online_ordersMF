@@ -1,10 +1,13 @@
 // src/api.js
-import axios from 'axios';
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000',
-  // withCredentials: true, // enable only if you switch to httpOnly cookie auth
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000", // fallback for local dev only
+  withCredentials: true, // if you use cookies/sessions
 });
+
+
+
 
 // Attach JWT from localStorage on every request
 api.interceptors.request.use((config) => {
