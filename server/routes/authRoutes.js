@@ -3,13 +3,13 @@ const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
 const { sendMail } = require('../utils/mailer');
 const { authenticateToken } = require('../middlewares/authMiddleware');
 
-// ✅ Require models explicitly to avoid "undefined"
-const Otp = require('../models/Otp'); // make sure this file exists
+// Models
+const Otp = require('../models/Otp');
 let User;
 try {
   User = require('../models/User'); // adjust path/name if different
@@ -21,25 +21,21 @@ try {
    OTP Signup & Verification
 =========================== */
 
-// Request OTP
+// POST /api/auth/request-otp
 router.post('/request-otp', async (req, res) => {
   const { email } = req.body || {};
   if (!email) return res.status(400).json({ message: 'Email is required' });
 
   try {
-    // 6-digit OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Replace any existing OTPs for this email
     await Otp.destroy({ where: { email } });
     await Otp.create({
       email,
       otp: otpCode,
       expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
     });
-    console.log(`OTP stored for ${email}`);
 
-    // Send email or log
     if (process.env.DEV_MODE_EMAIL === 'log') {
       console.log(`🟢 DEV OTP for ${email}: ${otpCode}`);
       return res.json({ message: 'OTP generated (logged in server logs)' });
@@ -55,19 +51,19 @@ router.post('/request-otp', async (req, res) => {
       return res.json({ message: 'OTP sent successfully' });
     } catch (mailErr) {
       console.error('✉️  SMTP send error:', mailErr?.message || mailErr);
-      // Don’t block signup because of mail; return success with hint
+      // Don't block signup because of mail issues
       return res.status(200).json({
         message:
           'OTP generated but email failed to send. Please enable DEV_MODE_EMAIL=log or fix SMTP settings.',
       });
     }
   } catch (err) {
-    console.error('❌ request-otp error (DB/model?):', err?.message || err);
+    console.error('❌ request-otp error:', err?.message || err);
     return res.status(500).json({ message: 'Failed to create OTP' });
   }
 });
 
-// Verify OTP
+// POST /api/auth/verify-otp
 router.post('/verify-otp', async (req, res) => {
   const { email, otp, name, password } = req.body || {};
   if (!email || !otp) {
@@ -84,20 +80,28 @@ router.post('/verify-otp', async (req, res) => {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
-    // Optionally create user if not exists
+    // If user exists: allow login without password change
     let payload = { email };
     if (User) {
       let user = await User.findOne({ where: { email } });
+
       if (!user) {
-        const hashed = password
-          ? crypto.createHash('sha256').update(password).digest('hex')
-          : null;
+        // New user -> password is required because your User.password is NOT NULL
+        if (!password || String(password).trim() === '') {
+          return res.status(400).json({
+            message:
+              'Password is required to create your account. Please submit email, otp, name, and password.',
+          });
+        }
+
+        const hashed = await bcrypt.hash(String(password), 10);
         user = await User.create({ email, name, password: hashed });
       }
+
       payload = { id: user.id, email: user.email };
     }
 
-    // Clean up OTPs for this email
+    // Clean up OTPs after success
     await Otp.destroy({ where: { email } });
 
     // Issue JWT
@@ -112,7 +116,6 @@ router.post('/verify-otp', async (req, res) => {
 /* ===========================
    Regular Auth Routes
 =========================== */
-
 const {
   register,
   login,
