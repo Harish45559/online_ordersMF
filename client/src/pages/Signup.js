@@ -1,22 +1,23 @@
-import React, { useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
-import { requestOtp, verifyOtp } from "../services/api";
-import "../styles/Login.css";
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { requestOtp } from "../services/api";
+import "../styles/Signup.css";
 
 const Signup = () => {
-  const [step, setStep] = useState("form"); // form -> otp
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [otp, setOtp] = useState("");
-  const [message, setMessage] = useState("");
   const navigate = useNavigate();
-  const { setIsAuthenticated } = useContext(AuthContext);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+  const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const sendOtp = async (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     setMessage("");
 
@@ -25,37 +26,28 @@ const Signup = () => {
     const password = form.password;
 
     if (!name || !email || !password) {
-      setMessage("All fields are required.");
+      setMessage("Please fill in name, email and password.");
       return;
     }
 
     try {
-      const res = await requestOtp(name, email, password);
-      setMessage(res.message || "OTP sent to your email.");
-      setStep("otp");
-    } catch (err) {
-      setMessage(err?.response?.data?.message || "Failed to send OTP");
-    }
-  };
+      // Request OTP (backend only needs email to create OTP, but we pass all three for consistency)
+      await requestOtp(name, email, password);
 
-  const handleVerify = async (e) => {
-    e.preventDefault();
-    setMessage("");
+      // Save for VerifyOtp step
+      localStorage.setItem("signupName", name);
+      localStorage.setItem("signupEmail", email);
+      localStorage.setItem("signupPassword", password);
 
-    try {
-      const res = await verifyOtp(form.email.trim().toLowerCase(), otp.trim());
-      // Save auth and go home
-      localStorage.setItem("token", res.token);
-      localStorage.setItem("role", (res.user?.role || "").toLowerCase());
-      setIsAuthenticated(true);
-      navigate("/");
+      // Go to verification screen
+      navigate("/verify-otp");
     } catch (err) {
-      setMessage(err?.response?.data?.message || "Invalid or expired OTP");
+      setMessage(err?.response?.data?.message || "Failed to start signup");
     }
   };
 
   return (
-    <div className="login-container">
+    <div className="signup-container">
       <div className="top-bar">
         <div className="brand">Online Orders</div>
         <div className="actions">
@@ -64,62 +56,39 @@ const Signup = () => {
         </div>
       </div>
 
-      <div className="login-box">
-        <h2>{step === "form" ? "Create Account" : "Verify OTP"}</h2>
+      <div className="signup-box">
+        <h2>Create Account</h2>
+        <form onSubmit={handleSignup}>
+          <input
+            name="name"
+            type="text"
+            placeholder="Full Name"
+            value={form.name}
+            onChange={handleChange}
+            required
+          />
+          <input
+            name="email"
+            type="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            required
+          />
+          <input
+            name="password"
+            type="password"
+            placeholder="Password"
+            value={form.password}
+            onChange={handleChange}
+            required
+          />
 
-        {step === "form" ? (
-          <form onSubmit={sendOtp}>
-            <input
-              type="text"
-              name="name"
-              placeholder="Full Name"
-              value={form.name}
-              onChange={handleChange}
-              required
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email Address"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
-            {message && <p className="error-message">{message}</p>}
-            <button type="submit">Send OTP</button>
-          </form>
-        ) : (
-          <form onSubmit={handleVerify}>
-            <input
-              type="text"
-              placeholder="Enter OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              required
-            />
-            {message && <p className="error-message">{message}</p>}
-            <button type="submit">Verify & Sign Up</button>
-          </form>
-        )}
+          {message && <p className="error-message">{message}</p>}
+          <button type="submit">Send OTP</button>
+        </form>
 
-        <div className="login-links">
-          {step === "otp" && (
-            <button
-              type="button"
-              className="link-btn"
-              onClick={() => setStep("form")}
-            >
-              Resend / Edit Details
-            </button>
-          )}
+        <div className="signup-links">
           <Link to="/login">Already have an account? Login</Link>
         </div>
       </div>
