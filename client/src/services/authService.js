@@ -11,10 +11,10 @@ export const login = (email, password) =>
 export const forgotPassword = (email) =>
   api.post(`/api/auth/forgot-password`, { email });
 
-// New: resend OTP
+// Resend OTP
 export const resendOtp = (email) =>
   api.post(`/api/auth/resend-otp`, { email });
 
-// New: reset password
+// Reset password
 export const resetPassword = (token, password) =>
   api.post(`/api/auth/reset-password/${token}`, { password });

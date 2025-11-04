@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 import "../styles/TotalOrders.css";
 
 const PAGE_SIZES = [10, 20, 50, 100];
@@ -36,7 +36,7 @@ export default function TotalOrders() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:5000/api/orders/admin", {
+      const res = await api.get("/api/orders/admin", {
         params: { query, userId, status, page, pageSize, sort, dir },
         headers: { Authorization: token ? `Bearer ${token}` : undefined },
       });

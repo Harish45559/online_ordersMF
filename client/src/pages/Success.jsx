@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 
 export default function Success() {
   const [state, setState] = useState({ checking: true, ok: false, error: '' });
@@ -18,8 +18,8 @@ export default function Success() {
       try {
         console.log('Success.jsx session_id:', session_id, 'order_id:', order_id);
 
-        const { data } = await axios.post(
-          'http://localhost:5000/api/payment/confirm',
+        const { data } = await api.post(
+          '/api/payment/confirm',
           { session_id },
           { headers: { 'Content-Type': 'application/json' } }
         );

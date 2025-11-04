@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import axios from "axios";
+import api from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
 import "./CheckoutForm.css";
 
@@ -165,8 +165,8 @@ export default function CheckoutForm({
 
     setSubmitting(true);
     try {
-      const createRes = await axios.post(
-        "http://localhost:5000/api/orders",
+      const createRes = await api.post(
+        "/api/orders",
         {
           customerName: name,
           customerMobile: mobile,
@@ -193,8 +193,8 @@ export default function CheckoutForm({
         return;
       }
 
-      const sessionRes = await axios.post(
-        "http://localhost:5000/api/payment/create-checkout-session",
+      const sessionRes = await api.post(
+        "/api/payment/create-checkout-session",
         { orderId, currency: "gbp" },
         { headers: { "Content-Type": "application/json" } }
       );
