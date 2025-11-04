@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
-const { sendOtpEmail } = require('../utils/mailer'); // ✅ newly added import
+const { sendOtpEmail, sendMail } = require('../utils/mailer'); // ✅ include sendMail for reset emails
 
 const sign = (payload) =>
   jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -257,5 +257,75 @@ exports.verifyOtp = async (req, res) => {
   } catch (err) {
     console.error('OTP Verify Error:', err);
     res.status(500).json({ message: 'OTP verification failed', error: err.message });
+  }
+};
+
+/* ========= NEW: Forgot / Reset Password ========= */
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body || {};
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+
+    const user = await User.findOne({ where: { email } });
+    // Do not reveal if user exists to prevent enumeration
+    if (!user) {
+      return res.json({ message: 'If that email exists, a reset link has been sent.' });
+    }
+
+    const token = jwt.sign(
+      { email, purpose: 'reset' },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    const clientUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
+    const resetLink = `${clientUrl}/reset-password/${token}`;
+
+    if (String(process.env.DEV_MODE_EMAIL || '').toLowerCase() === 'log') {
+      console.log(`🔗 Password reset link for ${email}: ${resetLink}`);
+      return res.json({ message: 'Password reset link generated (logged in server logs)' });
+    }
+
+    await sendMail({
+      to: email,
+      subject: 'Password Reset',
+      text: `Click this link to reset your password: ${resetLink}`,
+      html: `<p>Click this link to reset your password (valid for 15 minutes):</p>
+             <p><a href="${resetLink}">${resetLink}</a></p>`,
+    });
+
+    res.json({ message: 'Password reset link sent if the email exists.' });
+  } catch (err) {
+    console.error('forgotPassword error:', err);
+    res.status(500).json({ message: 'Unable to process request' });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body || {};
+    if (!token) return res.status(400).json({ message: 'Token is required' });
+    if (!password) return res.status(400).json({ message: 'Password is required' });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.purpose !== 'reset') {
+      return res.status(400).json({ message: 'Invalid token purpose' });
+    }
+
+    const email = decoded.email;
+    const user = await User.findOne({ where: { email } });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const hashed = await bcrypt.hash(String(password), 10);
+    await user.update({ password: hashed });
+
+    res.json({ message: 'Password reset successful' });
+  } catch (err) {
+    console.error('resetPassword error:', err.message || err);
+    if (err.name === 'TokenExpiredError') {
+      return res.status(400).json({ message: 'Reset link expired. Please request a new one.' });
+    }
+    return res.status(400).json({ message: 'Invalid reset token' });
   }
 };

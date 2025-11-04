@@ -221,6 +221,8 @@ const {
   refreshToken,
   logout,
   updateMe,
+  forgotPassword,     // ✅ added
+  resetPassword,      // ✅ added
 } = require("../controllers/authController");
 
 router.post("/register", register);
@@ -230,5 +232,9 @@ router.post("/refresh", refreshToken);
 router.get("/me", authenticateToken, me);
 router.put("/me", authenticateToken, updateMe);
 router.post("/logout", authenticateToken, logout);
+
+// ✅ NEW: Forgot/Reset routes
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password/:token", resetPassword);
 
 module.exports = router;

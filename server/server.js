@@ -16,6 +16,7 @@ const app = express();
 ===================================================== */
 const allowedOrigins = [
   process.env.FRONTEND_URL, // e.g. https://online-ordersmf.onrender.com
+  'https://online-ordersmf.onrender.com', // ✅ allow live front-end by default
   'http://localhost:3000',
   'http://localhost:5173',
 ].filter(Boolean);
@@ -32,7 +33,6 @@ app.post('/_diag/email', async (req, res) => {
     res.status(500).json({ ok: false, error: e.message });
   }
 });
-
 
 const corsOptions = {
   origin: (origin, cb) => {
