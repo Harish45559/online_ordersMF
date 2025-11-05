@@ -51,10 +51,3 @@ root.render(
     </HashRouter>
   </React.StrictMode>
 );
-<AuthProvider>
-  <CartProvider>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </CartProvider>
-</AuthProvider>
