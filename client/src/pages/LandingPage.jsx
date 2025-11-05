@@ -23,8 +23,8 @@ export default function LandingPage() {
       <div className="hero-section">
         <div className="hero-text">
           <h1>Order your favorite food now</h1>
-          <p>Quick delivery from nearby restaurants</p>
-          <button onClick={() => navigate("/menu")}>Explore Menu</button>
+          <p>Quick delivery from our Truck</p>
+          
         </div>
       </div>
     </div>

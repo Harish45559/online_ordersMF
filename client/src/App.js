@@ -21,6 +21,7 @@ import TotalOrders from "./pages/TotalOrders";
 import Success from "./pages/Success";
 import { useAuth } from "./context/AuthContext";
 
+
 function App() {
   const { isAuthenticated, ready } = useAuth();
 

@@ -1,12 +1,11 @@
 const db = require('../models');
 const { Op } = require('sequelize');
 const { sequelize, Order, OrderItem } = db;
-// If you have a User model and associations, you can optionally include it:
-// const { User } = db;
+// const { User } = db; // if you have it
 
 /**
  * Create order (from checkout)
- * Keeps your existing single 'address' field.
+ * Keeps a single 'address' string as in your existing model.
  */
 async function createOrder(req, res) {
   const t = await sequelize.transaction();
@@ -14,11 +13,11 @@ async function createOrder(req, res) {
     const {
       customerName,
       customerMobile,
-      address,           // ← using your existing single address string
+      address,
       paymentMethod,
       items,
       totalAmount,
-      notes,             // optional notes
+      notes,
     } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
@@ -29,7 +28,7 @@ async function createOrder(req, res) {
     // === PER-DAY COUNTER ===
     const todayISO = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
-    // Ensure counter table exists
+    // ensure counter table exists (Postgres)
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS order_counters (
         counter_date DATE PRIMARY KEY,
@@ -37,7 +36,7 @@ async function createOrder(req, res) {
       );
     `, { transaction: t });
 
-    // Atomic increment or insert
+    // atomic increment or insert
     const [rows] = await sequelize.query(
       `
       INSERT INTO order_counters (counter_date, last_no)
@@ -59,7 +58,7 @@ async function createOrder(req, res) {
         userId: req.user?.id || null,
         customerName,
         customerMobile,
-        address,                                // ← store address snapshot
+        address,
         paymentMethod,
         totalAmount: Number(totalAmount || 0),
         status: paymentMethod === 'cod' ? 'paid' : 'pending_payment',
@@ -93,9 +92,7 @@ async function createOrder(req, res) {
   }
 }
 
-/**
- * Mark order as paid (e.g., Stripe confirm/webhook)
- */
+/** Mark order as paid (e.g., Stripe confirm/webhook) */
 async function markPaid(req, res) {
   try {
     const { orderId, paymentIntentId, stripeSessionId } = req.body;
@@ -118,10 +115,7 @@ async function markPaid(req, res) {
   }
 }
 
-/**
- * Live orders (admin/kitchen): paid | preparing | ready
- * Address is part of the Order model, so it returns automatically.
- */
+/** Live orders (admin/kitchen): paid | preparing | ready */
 async function getLiveOrders(_req, res) {
   try {
     const live = await Order.findAll({
@@ -136,9 +130,7 @@ async function getLiveOrders(_req, res) {
   }
 }
 
-/**
- * Update order status (admin)
- */
+/** Update order status (admin) */
 async function updateStatus(req, res) {
   try {
     const { id } = req.params;
@@ -164,9 +156,7 @@ async function updateStatus(req, res) {
   }
 }
 
-/**
- * Current user's order history
- */
+/** Current user's order history */
 async function getOrderHistory(req, res) {
   try {
     const raw = (req.query.userId && req.user?.role === 'admin')
@@ -189,9 +179,7 @@ async function getOrderHistory(req, res) {
   }
 }
 
-/**
- * Single order (receipt)
- */
+/** Single order (receipt) */
 async function getReceipt(req, res) {
   try {
     const { id } = req.params;
@@ -213,9 +201,7 @@ async function getReceipt(req, res) {
   }
 }
 
-/**
- * Today’s orders (all statuses) — includes address & items
- */
+/** Today’s orders (all statuses) */
 async function getTodayOrders(_req, res) {
   try {
     const start = new Date();
@@ -227,7 +213,6 @@ async function getTodayOrders(_req, res) {
       where: { createdAt: { [Op.between]: [start, end] } },
       order: [['createdAt', 'DESC']],
       include: [{ model: OrderItem, as: 'items' }],
-      // address is a normal column on Order, so it returns automatically
     });
 
     res.json(today);
@@ -237,10 +222,7 @@ async function getTodayOrders(_req, res) {
   }
 }
 
-/**
- * Admin: list orders with search & pagination
- * GET /api/orders/admin?query=&userId=&status=&page=1&pageSize=20&sort=createdAt&dir=DESC
- */
+/** Admin: list orders with search & pagination */
 async function listOrdersAdmin(req, res) {
   try {
     const {
@@ -275,7 +257,7 @@ async function listOrdersAdmin(req, res) {
         { displayCode: { [Op.iLike]: `%${q}%` } },
         { customerName: { [Op.iLike]: `%${q}%` } },
         { customerMobile: { [Op.iLike]: `%${q}%` } },
-        { address: { [Op.iLike]: `%${q}%` } },   // ← include address in search
+        { address: { [Op.iLike]: `%${q}%` } },
       ];
       if (!Number.isNaN(numericId)) {
         or.push({ id: numericId });
@@ -308,7 +290,6 @@ async function listOrdersAdmin(req, res) {
   }
 }
 
-// --- EXPORTS ---
 module.exports = {
   createOrder,
   markPaid,
