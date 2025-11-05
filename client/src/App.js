@@ -1,6 +1,4 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useContext } from "react";
-import { AuthContext } from "./context/AuthContext";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Menu from "./pages/Menu";
@@ -21,11 +19,12 @@ import LiveOrders from "./pages/LiveOrders";
 import LandingPage from "./pages/LandingPage";
 import TotalOrders from "./pages/TotalOrders";
 import Success from "./pages/Success";
+import { useAuth } from "./context/AuthContext";
 
 function App() {
-  const { isAuthenticated, ready } = useContext(AuthContext);
+  const { isAuthenticated, ready } = useAuth();
 
-  // Optional: avoid layout flicker until auth is hydrated
+  // Prevent layout flicker until localStorage is read
   if (!ready) return null;
 
   return (
@@ -33,13 +32,13 @@ function App() {
       {isAuthenticated && <Sidebar />}
       <div style={{ marginLeft: isAuthenticated ? "250px" : "0", width: "100%" }}>
         <Routes>
-          {/* Landing Page */}
+          {/* Landing / Default */}
           <Route
             path="/"
             element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
           />
 
-          {/* Dashboard (protected) */}
+          {/* Protected routes */}
           <Route
             path="/dashboard"
             element={
@@ -48,15 +47,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-          {/* Auth routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/verify-otp" element={<VerifyOtp />} />
-          <Route path="/reset-password/:id" element={<ResetPassword />} />
-
-          {/* App Pages (protected) */}
           <Route
             path="/menu"
             element={
@@ -105,7 +95,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/live-orders" element={<LiveOrders />} />
           <Route
             path="/tracking"
             element={
@@ -114,9 +103,17 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/admin/orders" element={<TotalOrders />} />
 
-          {/* Stripe */}
+          {/* Auth routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/reset-password/:id" element={<ResetPassword />} />
+
+          {/* Admin / Misc */}
+          <Route path="/live-orders" element={<LiveOrders />} />
+          <Route path="/admin/orders" element={<TotalOrders />} />
           <Route
             path="/stripe-wrapper"
             element={
@@ -125,8 +122,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-          {/* Stripe Success/Cancel (public) */}
           <Route path="/success" element={<Success />} />
           <Route path="/cancel" element={<h2 style={{ padding: "30px" }}>Payment Cancelled</h2>} />
 

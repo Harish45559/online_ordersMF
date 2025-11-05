@@ -1,15 +1,14 @@
-/* client/src/context/AuthContext.js */
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 /**
- * Default shape ensures useContext(AuthContext) never returns undefined,
- * so destructuring like `const { isAuthenticated } = useContext(AuthContext)`
- * will not crash even if the provider isn't mounted yet.
+ * SAFE default so destructuring never crashes
+ * even if provider isn't mounted yet.
  */
 export const AuthContext = createContext({
   isAuthenticated: false,
   user: null,
   token: null,
+  ready: false,
   login: () => {},
   logout: () => {},
   setUser: () => {},
@@ -19,8 +18,9 @@ export const AuthContext = createContext({
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
+  const [ready, setReady] = useState(false);
 
-  // hydrate from storage on first mount
+  // hydrate from storage once
   useEffect(() => {
     try {
       const t = localStorage.getItem("token");
@@ -33,9 +33,8 @@ export const AuthProvider = ({ children }) => {
           setUser(null);
         }
       }
-    } catch {
-      // ignore storage errors
-    }
+    } catch {}
+    setReady(true);
   }, []);
 
   const login = (nextToken, nextUser) => {
@@ -63,30 +62,27 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated: !!token,
       token,
       user,
+      ready,
       login,
       logout,
       setUser,
       setToken,
     }),
-    [token, user]
+    [token, user, ready]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-/**
- * Optional convenience hook. If some files import `useAuth()`, they'll get
- * a safe fallback even when the provider is not mounted for any reason.
- */
-export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  return ctx || {
+/** convenience hook so destructuring is always safe */
+export const useAuth = () =>
+  useContext(AuthContext) || {
     isAuthenticated: false,
     user: null,
     token: null,
+    ready: true,
     login: () => {},
     logout: () => {},
     setUser: () => {},
     setToken: () => {},
   };
-};
