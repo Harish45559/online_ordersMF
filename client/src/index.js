@@ -1,12 +1,10 @@
+/* client/src/index.js */
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { HashRouter } from "react-router-dom";
 import App from "./App";
-
-// ⬇️ Make sure this path matches your project
 import { AuthProvider } from "./context/AuthContext";
 
-// Simple error boundary so blank screens show an explanation instead of nothing
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -16,7 +14,7 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
   componentDidCatch(error, info) {
-    // Helpful in Render logs
+    // Helpful in logs
     // eslint-disable-next-line no-console
     console.error("App crashed:", error, info);
   }
@@ -40,9 +38,7 @@ const root = createRoot(container);
 
 root.render(
   <React.StrictMode>
-    {/* HashRouter ensures refreshes work on static hosting */}
     <HashRouter>
-      {/* ⬇️ Restore AuthProvider so useContext(AuthContext) is defined */}
       <AuthProvider>
         <ErrorBoundary>
           <App />
