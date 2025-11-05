@@ -8,7 +8,10 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
-  const { setIsAuthenticated } = useContext(AuthContext);
+
+  // FIX: your AuthContext no longer has setIsAuthenticated,
+  // use its setToken / setUser instead.
+  const { setToken, setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -16,12 +19,15 @@ const Login = () => {
     try {
       const response = await loginUser(email, password);
 
-      // Save token and a normalized role from response.user.role
+      // Save token and normalized role
       localStorage.setItem('token', response.token);
       const normalizedRole = (response?.user?.role || '').toLowerCase();
       localStorage.setItem('role', normalizedRole);
 
-      setIsAuthenticated(true);
+      // ✅ update AuthContext properly
+      if (setToken) setToken(response.token);
+      if (setUser) setUser(response.user);
+
       navigate('/');
     } catch (err) {
       setMessage('Invalid email or password');
