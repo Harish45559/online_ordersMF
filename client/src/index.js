@@ -3,7 +3,10 @@ import { createRoot } from "react-dom/client";
 import { HashRouter } from "react-router-dom";
 import App from "./App";
 
-// Simple error boundary so blank screens show an explanation
+// ⬇️ Make sure this path matches your project
+import { AuthProvider } from "./context/AuthContext";
+
+// Simple error boundary so blank screens show an explanation instead of nothing
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -13,6 +16,7 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
   componentDidCatch(error, info) {
+    // Helpful in Render logs
     // eslint-disable-next-line no-console
     console.error("App crashed:", error, info);
   }
@@ -36,11 +40,21 @@ const root = createRoot(container);
 
 root.render(
   <React.StrictMode>
-    {/* HashRouter makes refreshes safe on static hosts */}
+    {/* HashRouter ensures refreshes work on static hosting */}
     <HashRouter>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
+      {/* ⬇️ Restore AuthProvider so useContext(AuthContext) is defined */}
+      <AuthProvider>
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
+      </AuthProvider>
     </HashRouter>
   </React.StrictMode>
 );
+<AuthProvider>
+  <CartProvider>
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  </CartProvider>
+</AuthProvider>
