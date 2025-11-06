@@ -1,91 +1,76 @@
-// client/src/pages/Success.jsx
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import React, { useEffect, useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 export default function Success() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
-  const [status, setStatus] = useState('confirming'); // confirming | paid | notpaid | error
+  const [status, setStatus] = useState("confirming");
 
   useEffect(() => {
-    const run = async () => {
-      const session_id = searchParams.get('session_id');
-      const order_id = searchParams.get('order_id');
+    const confirmPayment = async () => {
+      const session_id = searchParams.get("session_id");
+      const order_id = searchParams.get("order_id");
 
       if (!session_id || !order_id) {
-        setStatus('error');
+        setStatus("error");
         return;
       }
 
       try {
-        // Ask server to confirm + mark order as paid
-        const { data } = await api.post('/api/payment/confirm', {
-          session_id,
-          order_id,
+        // ✅ Call backend to mark payment as paid
+        const { data } = await api.post("/api/orders/mark-paid", {
+          orderId: order_id,
+          stripeSessionId: session_id,
         });
 
-        if (data?.paid) {
-          // clear any local cart
-          try {
-            localStorage.removeItem('cart');
-          } catch {}
-
-          setStatus('paid');
+        if (data?.status === "paid") {
+          setStatus("paid");
+          localStorage.removeItem("cart"); // Clear cart after payment
         } else {
-          setStatus('notpaid');
+          setStatus("notpaid");
         }
       } catch (err) {
-        console.error('Confirm error:', err?.message || err);
-        setStatus('error');
+        console.error("Payment confirmation error:", err);
+        setStatus("error");
       }
     };
-    run();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
-  const goToMenu = () => {
-    // Adjust the path to your actual menu route
-    navigate('/menu');
-  };
+    confirmPayment();
+  }, [searchParams]);
+
+  const goToMenu = () => navigate("/menu");
 
   return (
-    <div style={{ maxWidth: 720, margin: '40px auto', padding: '0 16px' }}>
-      {status === 'confirming' && (
+    <div style={{ textAlign: "center", padding: "40px" }}>
+      {status === "confirming" && (
         <>
-          <h2>Payment successful 🎉</h2>
-          <p>Finalising your order…</p>
+          <h2>Confirming Payment…</h2>
+          <p>Please wait while we verify your order.</p>
         </>
       )}
 
-      {status === 'paid' && (
+      {status === "paid" && (
         <>
-          <h2>Payment successful 🎉</h2>
-          <p>Your order has been placed and will now appear in Live Orders.</p>
-          <button style={{ marginTop: 16 }} onClick={goToMenu}>
-            Back to Menu
-          </button>
+          <h2>✅ Payment Successful!</h2>
+          <p>Your order has been confirmed and is being prepared.</p>
+          <button onClick={goToMenu}>Go to Menu</button>
         </>
       )}
 
-      {status === 'notpaid' && (
+      {status === "notpaid" && (
         <>
-          <h2>Payment not completed</h2>
-          <p>If money was taken, it may be pending—please contact support with your order ID.</p>
-          <button style={{ marginTop: 16 }} onClick={goToMenu}>
-            Back to Menu
-          </button>
+          <h2>⚠️ Payment not completed</h2>
+          <p>Please contact support with your Order ID.</p>
+          <button onClick={goToMenu}>Back to Menu</button>
         </>
       )}
 
-      {status === 'error' && (
+      {status === "error" && (
         <>
-          <h2>We couldn’t verify your payment</h2>
-          <p>Please try again or contact support.</p>
-          <button style={{ marginTop: 16 }} onClick={goToMenu}>
-            Back to Menu
-          </button>
+          <h2>❌ Something went wrong</h2>
+          <p>Unable to verify payment. Please try again.</p>
+          <button onClick={goToMenu}>Back to Menu</button>
         </>
       )}
     </div>
