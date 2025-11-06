@@ -1,7 +1,7 @@
+// client/src/pages/LiveOrders.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../services/api";
 import "../styles/LiveOrders.css";
-import { startOrderAlert, stopOrderAlert } from "../utils/orderAlert";
 
 function formatOrderCode(id) {
   if (typeof id === "string") return id.slice(-6).toUpperCase();
@@ -29,18 +29,12 @@ export default function LiveOrders() {
   const [tab, setTab] = useState("active");
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState({});
-  const prevCountRef = useRef(0);
-  const dayKeyRef = useRef(new Date().toDateString());
+  const dayKeyRef = useRef(new Date().toDateString()); // midnight reset
 
   const fetchToday = async () => {
     try {
       const { data } = await api.get("/api/orders/today");
       setOrders(Array.isArray(data) ? data : []);
-      // 🟢 play alert when new orders appear
-      if (data.length > prevCountRef.current) {
-        startOrderAlert();
-      }
-      prevCountRef.current = data.length;
     } catch (e) {
       console.error("today orders error:", e?.response?.data || e);
       if (e?.response?.status === 401) window.location.href = "/login";
@@ -52,18 +46,21 @@ export default function LiveOrders() {
   useEffect(() => {
     fetchToday();
     const poll = setInterval(() => {
+      // midnight reset
       const nowKey = new Date().toDateString();
       if (nowKey !== dayKeyRef.current) {
         dayKeyRef.current = nowKey;
         setLoading(true);
+        fetchToday();
+      } else {
+        fetchToday();
       }
-      fetchToday();
     }, 5000);
     return () => clearInterval(poll);
   }, []);
 
   const derived = useMemo(() => {
-    
+    // Sort: active first (paid→preparing→ready), then completed, then others; newest first within group
     const RANK = { paid: 1, preparing: 2, ready: 3, completed: 4, cancelled: 5, pending_payment: 6 };
     const list = [...orders].sort((a, b) => {
       const ra = RANK[a?.status] ?? 99;
@@ -72,12 +69,14 @@ export default function LiveOrders() {
       return new Date(b.createdAt) - new Date(a.createdAt);
     });
 
+    // counts per tab
     const counts = { active: 0, completed: 0, all: list.length };
     list.forEach((o) => {
       if (ACTIVE.has(o.status)) counts.active++;
       if (o.status === "completed") counts.completed++;
     });
 
+    // tab filter
     const filtered = list.filter((o) => {
       const byTab =
         tab === "all"
@@ -93,11 +92,10 @@ export default function LiveOrders() {
     return { filtered, counts };
   }, [orders, tab, search]);
 
-  // ---- actions ----
+  // ---- actions (only for non-completed/cancelled) ----
   const setStatusOptimistic = (id, nextStatus) => {
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: nextStatus } : o)));
   };
-
   const updateStatus = async (order, status) => {
     if (!order?.id) return;
     if (!["paid", "preparing", "ready", "completed", "cancelled"].includes(status)) {
@@ -109,7 +107,6 @@ export default function LiveOrders() {
     setStatusOptimistic(order.id, status);
     try {
       await api.patch(`/api/orders/${order.id}/status`, { status });
-      if (status === "preparing" || status === "cancelled") stopOrderAlert(); // 🟢 stop tone when accepted/rejected
     } catch (e) {
       setStatusOptimistic(order.id, prev);
       console.error("updateStatus error:", e?.response?.data || e);
@@ -122,7 +119,6 @@ export default function LiveOrders() {
       });
     }
   };
-
   const renderActions = (o) => {
     const isBusy = !!busy[o.id];
     const s = o?.status;
@@ -131,41 +127,23 @@ export default function LiveOrders() {
     return (
       <div className="lo-actions">
         {s === "paid" && (
-          <>
-            <button
-              className="lo-btn lo-btn-ok"
-              disabled={isBusy}
-              onClick={() => updateStatus(o, "preparing")}
-            >
-              ✅ Accept
-            </button>
-            <button
-              className="lo-btn lo-btn-bad"
-              disabled={isBusy}
-              onClick={() => updateStatus(o, "cancelled")}
-            >
-              ❌ Reject
-            </button>
-          </>
+          <button className="lo-btn lo-btn-warn" disabled={isBusy} onClick={() => updateStatus(o, "preparing")}>
+            Mark Preparing
+          </button>
         )}
         {s === "preparing" && (
-          <button
-            className="lo-btn lo-btn-info"
-            disabled={isBusy}
-            onClick={() => updateStatus(o, "ready")}
-          >
+          <button className="lo-btn lo-btn-info" disabled={isBusy} onClick={() => updateStatus(o, "ready")}>
             Mark Ready
           </button>
         )}
         {s === "ready" && (
-          <button
-            className="lo-btn lo-btn-ok"
-            disabled={isBusy}
-            onClick={() => updateStatus(o, "completed")}
-          >
+          <button className="lo-btn lo-btn-ok" disabled={isBusy} onClick={() => updateStatus(o, "completed")}>
             Complete
           </button>
         )}
+        <button className="lo-btn lo-btn-bad lo-btn-ghost" disabled={isBusy} onClick={() => updateStatus(o, "cancelled")}>
+          Cancel
+        </button>
       </div>
     );
   };
@@ -192,17 +170,18 @@ export default function LiveOrders() {
     <div className="lo-wrap">
       <header className="lo-header">
         <div className="lo-title">
-          <h2>Live Orders</h2>
+          <h2>Today’s Orders</h2>
           <span className="lo-sub">
             {new Date().toLocaleDateString()} • {derived.counts.all} total
           </span>
         </div>
 
         <div className="lo-controls">
-          <div className="lo-filters" role="tablist">
+          <div className="lo-filters" role="tablist" aria-label="Order filters">
             {TABS.map((t) => (
               <button
                 key={t.key}
+                role="tab"
                 className={`lo-filter ${tab === t.key ? "is-active" : ""}`}
                 onClick={() => setTab(t.key)}
               >
@@ -231,12 +210,14 @@ export default function LiveOrders() {
       {derived.filtered.length === 0 ? (
         <div className="lo-empty">
           <div className="lo-empty-icon">🍽️</div>
-          <div className="lo-empty-title">No orders</div>
+          <div className="lo-empty-title">No orders in this tab</div>
+          <div className="lo-empty-sub">Try a different tab or clear search.</div>
         </div>
       ) : (
         <div className="lo-grid">
           {derived.filtered.map((o) => {
             const code = o?.displayCode || formatOrderCode(o?.id);
+
             const items = Array.isArray(o?.items) ? o.items : [];
             const totalQty = countItems(items);
 
@@ -247,7 +228,7 @@ export default function LiveOrders() {
                     <span className="lo-hash">#</span>
                     {code}
                   </div>
-                  <span className={`lo-status lo-${o?.status || "paid"}`}>{o?.status}</span>
+                  <span className={`lo-status lo-${o?.status || "paid"}`}>{o?.status || "paid"}</span>
                 </div>
 
                 <div className="lo-meta">
@@ -261,7 +242,9 @@ export default function LiveOrders() {
                   </div>
                   <div className="lo-meta-row">
                     <span className="lo-meta-key">Address</span>
-                    <span className="lo-meta-val lo-notes">{o?.address || "-"}</span>
+                    <span className="lo-meta-val lo-notes" style={{ whiteSpace: "pre-wrap" }}>
+                      {o?.address || "-"}
+                    </span>
                   </div>
                   <div className="lo-meta-row">
                     <span className="lo-meta-key">Total</span>
@@ -273,6 +256,12 @@ export default function LiveOrders() {
                       {totalQty}
                     </span>
                   </div>
+                  {(o.notes && o.notes.trim()) ? (
+                    <div className="lo-meta-row">
+                      <span className="lo-meta-key">Notes</span>
+                      <span className="lo-meta-val lo-notes">{o.notes}</span>
+                    </div>
+                  ) : null}
                 </div>
 
                 <ul className="lo-items">
@@ -293,7 +282,9 @@ export default function LiveOrders() {
                       ? new Date(o.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
                       : ""}
                   </time>
-                  {o.paymentMethod && <span className="lo-tag">{o.paymentMethod}</span>}
+                  <div className="lo-tags">
+                    {o.paymentMethod ? <span className="lo-tag">{o.paymentMethod}</span> : null}
+                  </div>
                 </div>
 
                 {renderActions(o)}
